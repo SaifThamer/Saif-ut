@@ -1,0 +1,47 @@
+name: بناء برنامج التثبيت لويندوز
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: تنزيل الكود
+        uses: actions/checkout@v4
+
+      - name: تجهيز بايثون
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: تثبيت المتطلبات
+        run: |
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: بناء ملف exe واحد
+        run: |
+          pyinstaller --onefile --windowed --name "الأرشيف_الرسمي" main.py
+
+      - name: تثبيت Inno Setup
+        run: choco install innosetup -y
+
+      - name: بناء برنامج التثبيت (Installer)
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss
+
+      - name: رفع ملف exe المباشر (بدون تثبيت)
+        uses: actions/upload-artifact@v4
+        with:
+          name: الأرشيف_الرسمي-exe-مباشر
+          path: dist/الأرشيف_الرسمي.exe
+
+      - name: رفع برنامج التثبيت الكامل
+        uses: actions/upload-artifact@v4
+        with:
+          name: برنامج-التثبيت-الكامل
+          path: installer_output/*.exe
